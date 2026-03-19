@@ -29,7 +29,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import custom modules
-from database import init_db, get_db, User
+from cloud_database import init_db, get_db, User
 from auth import AuthManager, init_session_state, login_user, logout_user, check_session, require_auth, require_role
 
 # Initialize database
@@ -750,3 +750,4 @@ def show_profile():
 
 if __name__ == "__main__":
     main()
+
