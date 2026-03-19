@@ -7,18 +7,9 @@ import bcrypt
 import os
 from pathlib import Path
 
-# Check if running on Streamlit Cloud
-IS_CLOUD = os.environ.get('STREAMLIT_RUNTIME_ENV') == 'cloud'
-
-if IS_CLOUD:
-    # Use in-memory SQLite for cloud (ephemeral)
-    DATABASE_URL = "sqlite:////tmp/deforestation_monitoring.db"
-    # Create directories in /tmp for cloud
-    BASE_DIR = "/tmp"
-else:
-    # Use local file for development
-    DATABASE_URL = "sqlite:///deforestation_monitoring.db"
-    BASE_DIR = "."
+# Use /tmp for cloud storage
+BASE_DIR = "/tmp"
+DATABASE_URL = f"sqlite:///{BASE_DIR}/deforestation_monitoring.db"
 
 # Create directories
 for dir_name in ['logs', 'uploads', 'reports', 'temp']:
