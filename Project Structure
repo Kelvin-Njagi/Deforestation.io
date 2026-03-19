@@ -1,0 +1,16 @@
+deforestation_monitoring/
+├── app.py                 # Main application entry point
+├── database.py            # Database models and connection
+├── auth.py               # Authentication functions
+├── config.py             # Configuration settings
+├── utils.py              # Utility functions
+├── image_processor.py    # Image processing logic
+├── requirements.txt      # Dependencies
+├── pages/
+│   ├── 01_Admin_Dashboard.py
+│   ├── 02_User_Dashboard.py
+│   ├── 03_Monitoring.py
+│   ├── 04_Analytics.py
+│   └── 05_Reports.py
+└── logs/
+    └── system.log        # System logs
