@@ -1,4 +1,4 @@
-﻿import streamlit as st
+import streamlit as st
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Float, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -7,8 +7,15 @@ import bcrypt
 import os
 from pathlib import Path
 
-# Use /tmp for cloud storage
-BASE_DIR = "/tmp"
+# Use local path instead of /tmp for local development
+import sys
+IS_CLOUD = os.environ.get('STREAMLIT_RUNTIME_ENV') == 'cloud'
+
+if IS_CLOUD:
+    BASE_DIR = "/tmp"
+else:
+    BASE_DIR = "."
+
 DATABASE_URL = f"sqlite:///{BASE_DIR}/deforestation_monitoring.db"
 
 # Create directories
@@ -22,7 +29,7 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(100), unique=True, nullable=False, index=True)
@@ -34,23 +41,23 @@ class User(Base):
     login_attempts = Column(Integer, default=0)
     last_login = Column(DateTime)
     created_at = Column(DateTime, default=datetime.now)
-    
+
     # Security questions
     security_question_1 = Column(String(200))
     security_answer_1 = Column(String(200))
     security_question_2 = Column(String(200))
     security_answer_2 = Column(String(200))
-    
+
     def set_password(self, password):
         salt = bcrypt.gensalt()
         self.password_hash = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
-    
+
     def check_password(self, password):
         return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
 
 class SystemLog(Base):
     __tablename__ = "system_logs"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=True)
     action = Column(String(100), nullable=False)
@@ -62,8 +69,8 @@ class SystemLog(Base):
 def init_db():
     """Initialize database with tables and default admin"""
     Base.metadata.create_all(bind=engine)
-    print("✅ Database initialized")
-    
+    print("? Database initialized")
+
     # Create default admin
     db = SessionLocal()
     try:
@@ -83,9 +90,9 @@ def init_db():
             admin.security_answer_2 = bcrypt.hashpw(b"Nairobi", bcrypt.gensalt()).decode('utf-8')
             db.add(admin)
             db.commit()
-            print("✅ Default admin user created")
+            print("? Default admin user created")
     except Exception as e:
-        print(f"⚠️ Error creating admin: {e}")
+        print(f"?? Error creating admin: {e}")
     finally:
         db.close()
 

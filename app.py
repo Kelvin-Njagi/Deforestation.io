@@ -29,11 +29,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import custom modules
-from cloud_database import init_db, get_db, User
-from auth import AuthManager, init_session_state, login_user, logout_user, check_session, require_auth, require_role
+try:
+    from cloud_database import init_db, get_db, User
+    from auth import AuthManager, init_session_state, login_user, logout_user, check_session, require_auth, require_role
+except ImportError as e:
+    logger.error(f"Import error: {e}")
+    st.error("Failed to import required modules. Please check your installation.")
+    st.stop()
 
 # Initialize database
-init_db()
+try:
+    init_db()
+except Exception as e:
+    logger.error(f"Database initialization error: {e}")
+    st.error("Failed to initialize database. Please check your database configuration.")
 
 # Initialize session state
 init_session_state()
@@ -44,7 +53,7 @@ if 'navigation' not in st.session_state:
 
 st.set_page_config(
     page_title="Deforestation Monitoring System",
-    page_icon="??",
+    page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -198,7 +207,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Initialize managers
-auth_manager = AuthManager()
+try:
+    auth_manager = AuthManager()
+except Exception as e:
+    logger.error(f"Auth manager initialization error: {e}")
+    st.error("Failed to initialize authentication system.")
+    st.stop()
 
 def main():
     """Main application function"""
@@ -206,7 +220,7 @@ def main():
     # Header
     st.markdown("""
     <div class="main-header">
-        <h1>?? Deforestation Monitoring System</h1>
+        <h1>🌲 Deforestation Monitoring System</h1>
         <h3>University of Embu - Department of Computing and Information Technology</h3>
         <p>Mwaura Martin | B141/25323/2022</p>
     </div>
@@ -218,18 +232,18 @@ def main():
     else:
         show_main_app()
     
-    # Footer with real-time update - UPDATED YEAR TO 2026
+    # Footer with real-time update - Using (c) instead of © to avoid encoding issues
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     st.markdown(f"""
     <div class="footer">
-        <p>� 2026 Deforestation Monitoring System | University of Embu | Last Updated: {current_time} | Version 2.0.0</p>
+        <p>(c) 2026 Deforestation Monitoring System | University of Embu | Last Updated: {current_time} | Version 2.0.0</p>
     </div>
     """, unsafe_allow_html=True)
 
 def show_login_page():
     """Display login page"""
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.markdown("### ?? System Login")
+    st.markdown("### 🔐 System Login")
     st.markdown("Please log in to access the monitoring system")
     
     # Create tabs
@@ -250,18 +264,22 @@ def show_login_page():
             
             if submit:
                 if username and password:
-                    success, message, user = auth_manager.login(username, password)
-                    if success and user:
-                        login_user(user)
-                        st.rerun()
-                    else:
-                        st.markdown(f'<div class="error-message">{message}</div>', unsafe_allow_html=True)
+                    try:
+                        success, message, user = auth_manager.login(username, password)
+                        if success and user:
+                            login_user(user)
+                            st.rerun()
+                        else:
+                            st.markdown(f'<div class="error-message">{message}</div>', unsafe_allow_html=True)
+                    except Exception as e:
+                        logger.error(f"Login error: {e}")
+                        st.markdown('<div class="error-message">Login failed. Please try again.</div>', unsafe_allow_html=True)
                 else:
                     st.markdown('<div class="error-message">Please enter both username and password</div>', unsafe_allow_html=True)
     
     with tab2:
         with st.form("register_form"):
-            st.markdown("### ?? Create Account")
+            st.markdown("### 📝 Create Account")
             
             col1, col2 = st.columns(2)
             with col1:
@@ -301,22 +319,26 @@ def show_login_page():
                 elif not all([username, email, password, security_a1, security_a2]):
                     st.markdown('<div class="error-message">Please fill in all required fields</div>', unsafe_allow_html=True)
                 else:
-                    user_data = {
-                        'username': username,
-                        'email': email,
-                        'full_name': full_name,
-                        'password': password,
-                        'security_question_1': security_q1,
-                        'security_answer_1': security_a1,
-                        'security_question_2': security_q2,
-                        'security_answer_2': security_a2
-                    }
-                    
-                    success, message = auth_manager.register(user_data)
-                    if success:
-                        st.markdown(f'<div class="success-message">{message}</div>', unsafe_allow_html=True)
-                    else:
-                        st.markdown(f'<div class="error-message">{message}</div>', unsafe_allow_html=True)
+                    try:
+                        user_data = {
+                            'username': username,
+                            'email': email,
+                            'full_name': full_name,
+                            'password': password,
+                            'security_question_1': security_q1,
+                            'security_answer_1': security_a1,
+                            'security_question_2': security_q2,
+                            'security_answer_2': security_a2
+                        }
+                        
+                        success, message = auth_manager.register(user_data)
+                        if success:
+                            st.markdown(f'<div class="success-message">{message}</div>', unsafe_allow_html=True)
+                        else:
+                            st.markdown(f'<div class="error-message">{message}</div>', unsafe_allow_html=True)
+                    except Exception as e:
+                        logger.error(f"Registration error: {e}")
+                        st.markdown('<div class="error-message">Registration failed. Please try again.</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -349,12 +371,12 @@ def show_main_app():
         
         # System status
         st.markdown("### System Status")
-        st.info(f"?? Online\nLast Updated: {datetime.now().strftime('%H:%M:%S')}")
+        st.info(f"🟢 Online\nLast Updated: {datetime.now().strftime('%H:%M:%S')}")
         
         st.markdown("---")
         
         # Logout
-        if st.button("?? Logout", use_container_width=True):
+        if st.button("🚪 Logout", use_container_width=True):
             logout_user()
             st.rerun()
     
@@ -365,11 +387,15 @@ def show_main_app():
         # Import monitoring function from the page
         try:
             sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-            from pages.monitoring import show_monitoring_page
-            show_monitoring_page()
-        except ImportError as e:
-            st.error(f"Error loading monitoring page: {e}")
-            st.info("Please ensure the monitoring.py file exists in the pages directory")
+            # Try to import, but don't fail if it doesn't exist
+            try:
+                from pages.monitoring import show_monitoring_page
+                show_monitoring_page()
+            except ImportError:
+                logger.warning("Monitoring page not found, using fallback")
+                show_monitoring_fallback()
+        except Exception as e:
+            logger.error(f"Error loading monitoring page: {e}")
             show_monitoring_fallback()
     elif st.session_state.navigation == "Analytics":
         show_analytics()
@@ -384,7 +410,7 @@ def show_main_app():
 
 def show_dashboard():
     """Show dashboard"""
-    st.title("?? Dashboard")
+    st.title("📊 Dashboard")
     
     # Auto-refresh every 30 seconds
     if 'last_refresh' not in st.session_state:
@@ -400,16 +426,16 @@ def show_dashboard():
     with col1:
         st.markdown("""
         <div class="metric-card">
-            <h3>?? Forest Cover</h3>
+            <h3>🌲 Forest Cover</h3>
             <div class="metric-value">72.5%</div>
-            <p>? -2.1% change</p>
+            <p>▼ -2.1% change</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
         <div class="metric-card">
-            <h3>?? Avg NDVI</h3>
+            <h3>📊 Avg NDVI</h3>
             <div class="metric-value">0.45</div>
             <p>Vegetation Health</p>
         </div>
@@ -418,7 +444,7 @@ def show_dashboard():
     with col3:
         st.markdown("""
         <div class="metric-card">
-            <h3>?? Active Alerts</h3>
+            <h3>⚠️ Active Alerts</h3>
             <div class="metric-value">23</div>
             <p>Last 30 days</p>
         </div>
@@ -427,7 +453,7 @@ def show_dashboard():
     with col4:
         st.markdown("""
         <div class="metric-card">
-            <h3>?? Deforestation</h3>
+            <h3>📉 Deforestation</h3>
             <div class="metric-value">156 ha</div>
             <p>This month</p>
         </div>
@@ -436,33 +462,33 @@ def show_dashboard():
     st.markdown("---")
     
     # Quick actions - Now properly working
-    st.subheader("?? Quick Actions")
+    st.subheader("🚀 Quick Actions")
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        if st.button("?? Upload Image", key="quick_upload", use_container_width=True):
+        if st.button("📸 Upload Image", key="quick_upload", use_container_width=True):
             st.session_state.navigation = "Monitoring"
             st.rerun()
     
     with col2:
-        if st.button("?? View Analytics", key="quick_analytics", use_container_width=True):
+        if st.button("📊 View Analytics", key="quick_analytics", use_container_width=True):
             st.session_state.navigation = "Analytics"
             st.rerun()
     
     with col3:
-        if st.button("?? Generate Report", key="quick_report", use_container_width=True):
+        if st.button("📄 Generate Report", key="quick_report", use_container_width=True):
             st.session_state.navigation = "Reports"
             st.rerun()
     
     with col4:
-        if st.button("?? Manage Users", key="quick_users", use_container_width=True):
+        if st.button("👥 Manage Users", key="quick_users", use_container_width=True):
             st.session_state.navigation = "User Management"
             st.rerun()
     
     st.markdown("---")
     
     # Recent activity
-    st.subheader("?? Recent Activity")
+    st.subheader("📋 Recent Activity")
     activities = [
         {"time": "2026-03-19 14:30", "action": "Image analysis - Mt. Kenya", "status": "Completed", "user": "admin"},
         {"time": "2026-03-19 11:15", "action": "Report generated - Mau Complex", "status": "Completed", "user": "analyst"},
@@ -473,18 +499,18 @@ def show_dashboard():
     for activity in activities:
         col1, col2, col3, col4 = st.columns([2, 3, 1, 1])
         with col1:
-            st.write(f"?? {activity['time']}")
+            st.write(f"🕐 {activity['time']}")
         with col2:
-            st.write(f"?? {activity['action']}")
+            st.write(f"📌 {activity['action']}")
         with col3:
             status_color = "badge-success" if activity['status'] == "Completed" else "badge-warning"
             st.markdown(f'<span class="status-badge {status_color}">{activity["status"]}</span>', unsafe_allow_html=True)
         with col4:
-            st.write(f"?? {activity['user']}")
+            st.write(f"👤 {activity['user']}")
 
 def show_monitoring_fallback():
     """Fallback monitoring function if page import fails"""
-    st.title("??? Forest Monitoring")
+    st.title("🛰️ Forest Monitoring")
     st.info("Loading monitoring interface...")
     
     # Simple file upload for testing
@@ -492,7 +518,7 @@ def show_monitoring_fallback():
     
     if uploaded_file:
         st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
-        st.success("? Image uploaded successfully!")
+        st.success("✅ Image uploaded successfully!")
         
         with st.spinner("Processing image..."):
             import time
@@ -512,7 +538,7 @@ def show_monitoring_fallback():
 
 def show_analytics():
     """Show analytics page"""
-    st.title("?? Analytics Dashboard")
+    st.title("📈 Analytics Dashboard")
     
     # Generate sample data
     dates = pd.date_range(start='2025-01-01', end='2026-03-19', freq='M')
@@ -546,7 +572,7 @@ def show_analytics():
     
     # Statistics
     st.markdown("---")
-    st.subheader("?? Key Statistics")
+    st.subheader("📊 Key Statistics")
     
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Avg Forest Cover", f"{df['forest_cover'].mean():.1f}%", f"{df['forest_cover'].iloc[-1] - df['forest_cover'].iloc[0]:+.1f}%")
@@ -556,7 +582,7 @@ def show_analytics():
 
 def show_reports():
     """Show reports page"""
-    st.title("?? Reports")
+    st.title("📄 Reports")
     
     col1, col2 = st.columns([1, 2])
     
@@ -599,7 +625,7 @@ def show_reports():
             """, unsafe_allow_html=True)
             
             st.download_button(
-                "?? Download Report",
+                "📥 Download Report",
                 "Sample report content",
                 file_name=f"report_{datetime.now().strftime('%Y%m%d')}.pdf"
             )
@@ -609,10 +635,11 @@ def show_reports():
 def show_user_management():
     """Show user management (admin only)"""
     require_role('admin')
-    st.title("?? User Management")
+    st.title("👥 User Management")
     
-    db = next(get_db())
+    db = None
     try:
+        db = next(get_db())
         users = db.query(User).all()
         
         # Statistics
@@ -630,7 +657,7 @@ def show_user_management():
                 
                 with col1:
                     st.markdown(f"**Email:** {user.email}")
-                    st.markdown(f"**Status:** {'? Active' if user.is_active else '? Pending'}")
+                    st.markdown(f"**Status:** {'✅ Active' if user.is_active else '⏳ Pending'}")
                 
                 with col2:
                     st.markdown(f"**Login Attempts:** {user.login_attempts}")
@@ -644,70 +671,79 @@ def show_user_management():
                         
                         with col_a:
                             if not user.is_active:
-                                if st.button(f"? Approve", key=f"approve_{user.id}"):
+                                if st.button(f"✅ Approve", key=f"approve_{user.id}"):
                                     user.is_active = True
                                     db.commit()
                                     st.rerun()
                             elif user.is_locked:
-                                if st.button(f"?? Unlock", key=f"unlock_{user.id}"):
+                                if st.button(f"🔓 Unlock", key=f"unlock_{user.id}"):
                                     user.is_locked = False
                                     user.login_attempts = 0
                                     db.commit()
                                     st.rerun()
                         
                         with col_b:
-                            if st.button(f"? Delete", key=f"delete_{user.id}"):
+                            if st.button(f"❌ Delete", key=f"delete_{user.id}"):
                                 db.delete(user)
                                 db.commit()
                                 st.rerun()
+    except Exception as e:
+        logger.error(f"User management error: {e}")
+        st.error("Failed to load user data. Please try again.")
     finally:
-        db.close()
+        if db:
+            db.close()
 
 def show_system_logs():
     """Show system logs (admin only)"""
     require_role('admin')
-    st.title("?? System Logs")
+    st.title("📋 System Logs")
     
     # Read and display logs
     log_file = Path("logs/system.log")
     if log_file.exists():
-        with open(log_file, 'r') as f:
-            logs = f.readlines()
-        
-        # Filter options
-        col1, col2 = st.columns(2)
-        with col1:
-            log_level = st.selectbox("Log Level", ["All", "INFO", "WARNING", "ERROR", "CRITICAL"])
-        with col2:
-            lines = st.slider("Lines to show", 10, 100, 50)
-        
-        # Filter logs
-        filtered_logs = logs[-lines:]
-        if log_level != "All":
-            filtered_logs = [log for log in filtered_logs if log_level in log]
-        
-        # Display logs
-        for log in filtered_logs:
-            if "ERROR" in log or "CRITICAL" in log:
-                st.error(log.strip())
-            elif "WARNING" in log:
-                st.warning(log.strip())
-            else:
-                st.info(log.strip())
-        
-        # Download logs
-        if st.button("?? Download Full Logs"):
-            st.download_button(
-                "Download",
-                ''.join(logs),
-                file_name=f"system_logs_{datetime.now().strftime('%Y%m%d')}.log"
-            )
+        try:
+            with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+                logs = f.readlines()
+            
+            # Filter options
+            col1, col2 = st.columns(2)
+            with col1:
+                log_level = st.selectbox("Log Level", ["All", "INFO", "WARNING", "ERROR", "CRITICAL"])
+            with col2:
+                lines = st.slider("Lines to show", 10, 100, 50)
+            
+            # Filter logs
+            filtered_logs = logs[-lines:]
+            if log_level != "All":
+                filtered_logs = [log for log in filtered_logs if log_level in log]
+            
+            # Display logs
+            for log in filtered_logs:
+                log = log.strip()
+                if "ERROR" in log or "CRITICAL" in log:
+                    st.error(log)
+                elif "WARNING" in log:
+                    st.warning(log)
+                else:
+                    st.info(log)
+            
+            # Download logs
+            if st.button("📥 Download Full Logs"):
+                st.download_button(
+                    "Download",
+                    ''.join(logs),
+                    file_name=f"system_logs_{datetime.now().strftime('%Y%m%d')}.log"
+                )
+        except Exception as e:
+            logger.error(f"Error reading logs: {e}")
+            st.error("Failed to read log file.")
     else:
         st.info("No logs available yet")
 
 def show_profile():
     """Show user profile"""
-    st.title("?? My Profile")
+    st.title("👤 My Profile")
     
     col1, col2 = st.columns([1, 2])
     
@@ -746,8 +782,11 @@ def show_profile():
             ]
             
             for act in activities:
-                st.info(f"?? {act['time']} - {act['action']}")
+                st.info(f"🕐 {act['time']} - {act['action']}")
 
 if __name__ == "__main__":
-    main()
-
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Application error: {e}")
+        st.error(f"An error occurred: {str(e)}")
